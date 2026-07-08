@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "attesta": {
+      "url": "https://api.attesta.dev/mcp",
+      "headers": {
+        "X-API-Key": "YOUR_ATTESTA_API_KEY"
+      }
+    }
+  }
+}

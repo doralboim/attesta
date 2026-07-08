@@ -1,0 +1,14 @@
+---
+description: Testing requirements for Attesta
+globs: tests/**/*
+alwaysApply: false
+---
+
+# Testing Standards
+
+- pytest + pytest-asyncio; `ENVIRONMENT=test` and SQLite for fast local runs
+- Postgres integration runs in CI via service container
+- Each milestone adds tests before merge — not a final phase
+- Metering tests use `FakeStripeRail` and `FakeX402Rail`
+- Ingestion tests use `--fixture` JSON in `tests/fixtures/`
+- PII tests must prove agent names/phones/emails never reach snapshots

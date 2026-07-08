@@ -1,0 +1,1 @@
+Legacy prototype removed 2026-07-05. The active package is `app/` per project layout. The old `src/attesta/` tree duplicated MCP/REST with a different package name and has been deleted to avoid editing the wrong codepath.

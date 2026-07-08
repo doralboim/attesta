@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: attesta
+          POSTGRES_PASSWORD: attesta
+          POSTGRES_DB: attesta
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Ruff lint
+        run: ruff check app tests
+
+      - name: Ruff format check
+        run: ruff format --check app tests
+
+      - name: Mypy
+        run: mypy app
+        continue-on-error: true
+
+      - name: Tests (SQLite)
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: sqlite+aiosqlite:///./ci_test.db
+        run: pytest -q --cov=app --cov-report=term-missing
+
+      - name: Tests (Postgres)
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: postgresql+asyncpg://attesta:attesta@localhost:5432/attesta
+        run: pytest -q

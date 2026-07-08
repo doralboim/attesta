@@ -1,0 +1,92 @@
+{
+  "serverInfo": {
+    "name": "Attesta",
+    "version": "0.2.0",
+    "description": "Provenance-grade Portugal residential property data and signed JWS verification for AI agents."
+  },
+  "authentication": {
+    "required": false,
+    "schemes": ["api_key", "x402"],
+    "notes": "Pass api_key tool parameter or X-API-Key header for Stripe-metered access (~200 free calls/month). Without a key, REST returns HTTP 402 with x402 USDC payment spec on Base."
+  },
+  "tools": [
+    {
+      "name": "search_listings",
+      "description": "Search deduplicated residential property listings in Portugal. Coverage: PT residential. Cost: €0.01 per call. Example: search_listings(region='PT-08', city='Faro', max_price_eur=300000, limit=10)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": { "type": "string", "description": "ISO region code, e.g. PT-08 (Faro)" },
+          "city": { "type": "string", "description": "City name, e.g. Faro" },
+          "min_price_eur": { "type": "number" },
+          "max_price_eur": { "type": "number" },
+          "limit": { "type": "integer", "default": 20, "maximum": 50 },
+          "api_key": { "type": "string", "description": "Optional Attesta API key for metered billing" }
+        }
+      }
+    },
+    {
+      "name": "get_property",
+      "description": "Get canonical property record with sources, staleness score, and current price. Cost: €0.01 per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property_id": { "type": "string", "format": "uuid" },
+          "api_key": { "type": "string" }
+        },
+        "required": ["property_id"]
+      }
+    },
+    {
+      "name": "get_price_history",
+      "description": "Get price_events timeline including price cuts and delistings. Cost: €0.02 per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property_id": { "type": "string", "format": "uuid" },
+          "api_key": { "type": "string" }
+        },
+        "required": ["property_id"]
+      }
+    },
+    {
+      "name": "get_market_stats",
+      "description": "Aggregate market stats: median price/m², inventory count, stale listing rate. Cost: €0.02 per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": { "type": "string" },
+          "city": { "type": "string" },
+          "api_key": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "check_listing_freshness",
+      "description": "Check if a property is fresh, stale, or likely phantom/delisted. Cost: €0.02 per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property_id": { "type": "string", "format": "uuid" },
+          "api_key": { "type": "string" }
+        },
+        "required": ["property_id"]
+      }
+    },
+    {
+      "name": "verify_claim",
+      "description": "Verify a natural-language property claim; returns per-predicate verdicts and signed JWS attestation. Depth corpus (€0.02) or deep with live fetch (€0.08).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claim": { "type": "string", "description": "Natural-language property claim to verify" },
+          "depth": { "type": "string", "enum": ["corpus", "deep"], "default": "corpus" },
+          "api_key": { "type": "string" }
+        },
+        "required": ["claim"]
+      }
+    }
+  ],
+  "resources": [],
+  "prompts": []
+}

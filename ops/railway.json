@@ -1,0 +1,41 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "api": {
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "ops/Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+        "releaseCommand": "alembic upgrade head",
+        "numReplicas": 1,
+        "healthcheckPath": "/healthz",
+        "healthcheckTimeout": 30,
+        "restartPolicyType": "ON_FAILURE"
+      }
+    },
+    "ingest-worker": {
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "ops/Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "attesta-ingest",
+        "numReplicas": 1,
+        "restartPolicyType": "ON_FAILURE"
+      }
+    },
+    "resolve-worker": {
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "ops/Dockerfile"
+      },
+      "deploy": {
+        "startCommand": "attesta-resolve",
+        "numReplicas": 1,
+        "restartPolicyType": "ON_FAILURE"
+      }
+    }
+  }
+}

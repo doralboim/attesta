@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.doralboim/attesta",
+  "title": "Attesta",
+  "description": "Provenance-grade Portugal residential property data and signed JWS verification for AI agents. Search listings, check freshness, verify claims with cryptographic attestations.",
+  "version": "0.2.0",
+  "websiteUrl": "https://github.com/doralboim/attesta",
+  "repository": {
+    "url": "https://github.com/doralboim/attesta",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.attesta.dev/mcp"
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tool": "attesta-distribution",
+      "version": "0.2.0",
+      "category": "data",
+      "tags": ["real-estate", "portugal", "verification", "attestation", "proptech", "x402"]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "apiKey": {
+      "type": "string",
+      "description": "Attesta API key for metered access (~200 free calls/month). Get one at https://api.attesta.dev/docs or email hello@attesta.dev for a design-partner key."
+    }
+  },
+  "required": []
+}

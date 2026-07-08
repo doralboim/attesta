@@ -1,0 +1,22 @@
+---
+description: Backend Python conventions for Attesta
+globs: app/**/*.py
+alwaysApply: false
+---
+
+# Backend Conventions
+
+- Type-hint all public functions; target mypy strict on `app/`
+- Use `structlog` for structured JSON logs
+- DB access via `async_session_factory` / `get_db` dependency
+- Tool implementations live in `app/serving/tools.py` — REST and MCP share them
+- Payment logic only in `app/payments/` — never inline in routes
+- New sources: subclass `app/ingestion/base.py`, do not fork pipeline
+
+```python
+# ✅ Metering in route
+await MeteringService(db).authorize("search_listings", api_key=x_api_key)
+
+# ❌ Never skip metering
+return await ToolService(db).search_listings(body)
+```

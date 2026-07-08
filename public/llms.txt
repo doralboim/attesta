@@ -1,0 +1,49 @@
+# Attesta
+
+> Provenance-grade Portugal residential property data and signed JWS verification for AI agents.
+
+## Products
+
+1. **Attesta Data** — deduplicated listings, price history, staleness scores, cross-portal entity resolution.
+2. **Attesta Verify** — claim adjudication with signed JWS attestations (audit-trail primitive for EU AI Act deployments).
+
+## Base URL
+
+Set `PUBLIC_BASE_URL` in deployment. Local dev: `http://localhost:8000`
+
+## Endpoints
+
+| Path | Description |
+|------|-------------|
+| `/healthz` | Health check |
+| `/docs` | OpenAPI (REST) |
+| `/mcp` | MCP streamable HTTP |
+| `/.well-known/jwks.json` | Verify attestation signatures |
+| `/v1/verify` | Claim verification + JWS |
+| `/llms.txt` | This file |
+
+## MCP tools
+
+| Tool | When to use | Price (EUR) |
+|------|-------------|-------------|
+| `search_listings` | Find properties by region/city/price | 0.01 |
+| `get_property` | Canonical record + sources + staleness | 0.01 |
+| `get_price_history` | Price cuts, delistings, days on market | 0.02 |
+| `get_market_stats` | Median price, inventory, stale rate | 0.02 |
+| `check_listing_freshness` | Before recommending — phantom/delisted check | 0.02 |
+| `verify_claim` | Signed proof for a natural-language claim | 0.02–0.08 |
+
+Example: `verify_claim(claim="T2 in Faro €240k, 40 days on market", depth="corpus")`
+
+## Payment
+
+- **Stripe:** header `X-API-Key` (metered billing, ~200 free calls/month)
+- **x402:** no key → HTTP 402 with payment spec; retry with `X-PAYMENT` header (USDC on Base)
+
+## Coverage
+
+Portugal residential (`residential_pt`). Default corpus from bundled fixtures; live Idealista/Imovirtual collectors available when `APIFY_*` env is configured.
+
+## Attestation spec
+
+See `/public/attestation-spec.md` or repo `public/attestation-spec.md`.

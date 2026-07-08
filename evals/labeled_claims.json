@@ -1,0 +1,312 @@
+[
+  {
+    "claim": "T2 in Faro listed at \u20ac240,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 in Faro listed at \u20ac239,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 in Faro listed at \u20ac241,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 in Faro listed at \u20ac240,500",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 in Faro listed at \u20ac242,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 in Faro listed at \u20ac238,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac180,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac300,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac500,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac100,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac350,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac150,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T2 apartment in Faro for \u20ac400,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T1 in Lisboa at \u20ac385,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T1 in Lisboa at \u20ac384,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T1 in Lisboa at \u20ac386,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Flat in Lisboa \u20ac200,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Flat in Lisboa \u20ac600,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Flat in Lisboa \u20ac450,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T3 in Porto listed at \u20ac520,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "T3 in Porto listed at \u20ac518,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Home in Porto for \u20ac400,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Home in Porto for \u20ac300,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Home in Porto for \u20ac600,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Apartment in Athens for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Madrid for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Berlin for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Paris for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in London for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Barcelona for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Munich for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Vienna for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Rome for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "Apartment in Dublin for \u20ac200,000",
+    "expected": "UNVERIFIABLE",
+    "predicate": "entity_match"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T1 studio in Faro available for sale at \u20ac165,000",
+    "expected": "CONTRADICTED",
+    "predicate": "availability"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 30 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 45 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 60 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 90 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 120 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 15 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "T2 in Faro \u20ac240,000, 75 days on market",
+    "expected": "ANY",
+    "predicate": "days_on_market"
+  },
+  {
+    "claim": "Faro property \u20ac230,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac232,500",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac235,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac237,500",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac240,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac242,500",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac245,000",
+    "expected": "CORROBORATED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac247,500",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  },
+  {
+    "claim": "Faro property \u20ac250,000",
+    "expected": "CONTRADICTED",
+    "predicate": "price"
+  }
+]

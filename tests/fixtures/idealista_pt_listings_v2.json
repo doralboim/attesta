@@ -1,0 +1,87 @@
+[
+  {
+    "source": "idealista_pt",
+    "source_listing_id": "idl-1001",
+    "url": "https://idealista.pt/imovel/1001",
+    "observed_at": "2026-07-04T10:00:00+00:00",
+    "price_eur": 235000,
+    "status": "active",
+    "geo_lat": 37.0194,
+    "geo_lon": -7.9322,
+    "attrs": {
+      "city": "Faro",
+      "region": "PT-08",
+      "typology": "T2",
+      "area_m2": 78,
+      "title": "T2 apartment with sea view"
+    }
+  },
+  {
+    "source": "imovirtual",
+    "source_listing_id": "imo-2001",
+    "url": "https://imovirtual.com/imovel/2001",
+    "observed_at": "2026-07-04T10:00:00+00:00",
+    "price_eur": 235000,
+    "status": "active",
+    "geo_lat": 37.0195,
+    "geo_lon": -7.9320,
+    "attrs": {
+      "city": "Faro",
+      "region": "PT-08",
+      "typology": "T2",
+      "area_m2": 79,
+      "title": "T2 apartment sea view Faro centre"
+    }
+  },
+  {
+    "source": "idealista_pt",
+    "source_listing_id": "idl-1002",
+    "url": "https://idealista.pt/imovel/1002",
+    "observed_at": "2026-07-04T10:00:00+00:00",
+    "price_eur": 385000,
+    "status": "active",
+    "geo_lat": 38.7369,
+    "geo_lon": -9.1427,
+    "attrs": {
+      "city": "Lisboa",
+      "region": "PT-11",
+      "typology": "T1",
+      "area_m2": 52,
+      "title": "T1 renovated flat Avenidas Novas"
+    }
+  },
+  {
+    "source": "idealista_pt",
+    "source_listing_id": "idl-1003",
+    "url": "https://idealista.pt/imovel/1003",
+    "observed_at": "2026-07-04T10:00:00+00:00",
+    "price_eur": 520000,
+    "status": "active",
+    "geo_lat": 41.1579,
+    "geo_lon": -8.6291,
+    "attrs": {
+      "city": "Porto",
+      "region": "PT-13",
+      "typology": "T3",
+      "area_m2": 115,
+      "title": "T3 family home Boavista"
+    }
+  },
+  {
+    "source": "idealista_pt",
+    "source_listing_id": "idl-phantom",
+    "url": "https://idealista.pt/imovel/phantom",
+    "observed_at": "2026-07-04T10:00:00+00:00",
+    "price_eur": 165000,
+    "status": "delisted",
+    "geo_lat": 37.0150,
+    "geo_lon": -7.9350,
+    "attrs": {
+      "city": "Faro",
+      "region": "PT-08",
+      "typology": "T1",
+      "area_m2": 38,
+      "title": "T1 studio likely phantom"
+    }
+  }
+]

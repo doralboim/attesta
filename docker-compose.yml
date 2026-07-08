@@ -1,0 +1,40 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: attesta
+      POSTGRES_PASSWORD: attesta
+      POSTGRES_DB: attesta
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U attesta"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: ops/Dockerfile
+    command: alembic upgrade head
+    environment:
+      DATABASE_URL: postgresql+asyncpg://attesta:attesta@db:5432/attesta
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: ops/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://attesta:attesta@db:5432/attesta
+      BOOTSTRAP_API_KEY: dev-key-change-me
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully

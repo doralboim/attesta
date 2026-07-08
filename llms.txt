@@ -1,0 +1,5 @@
+# Attesta
+
+> Provenance-grade Southern-EU property data and signed claim verification for AI agents.
+
+See `public/llms.txt` on a running deployment, or the copy in this repo at `public/llms.txt`.

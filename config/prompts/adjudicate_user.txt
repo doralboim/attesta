@@ -1,0 +1,7 @@
+Claim: {claim}
+
+Predicates: {predicates_json}
+
+Evidence: {evidence_json}
+
+Return JSON only.
