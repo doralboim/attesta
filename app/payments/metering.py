@@ -139,11 +139,10 @@ class MeteringService:
     ) -> MeteringContext:
         key_hash = hash_api_key(raw_key)
         api_key = await self.session.get(ApiKey, key_hash)
-        if not api_key and self.settings.environment in ("development", "test"):
-            if raw_key == self.settings.bootstrap_api_key:
-                api_key = ApiKey(key_hash=key_hash, monthly_free_calls=self.settings.free_tier_monthly_calls)
-                self.session.add(api_key)
-                await self.session.flush()
+        if not api_key and raw_key == self.settings.bootstrap_api_key:
+            api_key = ApiKey(key_hash=key_hash, monthly_free_calls=self.settings.free_tier_monthly_calls)
+            self.session.add(api_key)
+            await self.session.flush()
         if not api_key or not api_key.is_active:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
