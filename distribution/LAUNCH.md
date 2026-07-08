@@ -26,34 +26,27 @@ One-page checklist to go from repo → live product people can try.
 
 ---
 
-## Step 1 — Deploy (Railway + Neon)
+## Step 1 — Deploy (Railway + Neon) ✅ DONE
 
-Infrastructure already provisioned:
+**Live URL (Railway):** https://api-production-d9143.up.railway.app  
+**Custom domain (pending DNS):** https://api.attesta.dev
 
-- **Railway project:** `attesta` (`368ba9cd-3c35-4ced-840d-ca19ed9b97be`)
-- **Neon project:** `attesta` (`super-water-47838213`)
+Neon DB migrated and seeded (5 properties, Faro corpus). Demo API key is in your local `.env.production` (also set on Railway as `BOOTSTRAP_API_KEY`).
+
+### DNS for api.attesta.dev (add at your domain registrar)
+
+| Type | Name | Value |
+|------|------|-------|
+| CNAME | `api` | `e7qlv9c0.up.railway.app` |
+| TXT | `_railway-verify.api` | `railway-verify=c2dfa302195aae27ed5be6d9676ce202bc2a535a7a0ca89a068366088083c224` |
+
+`attesta.dev` is not in your Cloudflare account — add these records wherever you manage DNS.
+
+### Verify locally
 
 ```bash
-# Generate secrets (saves .env.production — gitignored)
-python scripts/generate_production_env.py \
-  --database-url "postgresql+asyncpg://USER:PASS@HOST/neondb?ssl=require" \
-  --public-base-url "https://YOUR-RAILWAY-URL.up.railway.app"
-
-# Migrate + seed locally (or via railway run)
-set -a && source .env.production && set +a
-alembic upgrade head
-attesta-ingest --fixture
-attesta-resolve
-
-# Deploy API
-railway link -p attesta
-railway up --service api
-
-# Smoke test
-python scripts/demo.py --base-url https://YOUR-URL --api-key YOUR_DEMO_KEY
+python scripts/demo.py --base-url https://api-production-d9143.up.railway.app --api-key $(grep BOOTSTRAP_API_KEY .env.production | cut -d= -f2)
 ```
-
-Save the **demo API key** printed by `generate_production_env.py` — share it with early users.
 
 ---
 
