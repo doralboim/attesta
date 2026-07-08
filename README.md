@@ -72,11 +72,11 @@ python scripts/demo.py       # E2E against local API
 make openapi                 # writes public/openapi.json
 ```
 
-### LLM (optional, provider-agnostic)
+### LLM (optional, provider-agnostic via LiteLLM)
 
 Set `LLM_ENABLED=true` and configure models + prompt file paths in `.env` (see `.env.example`).  
-Uses [LiteLLM](https://docs.litellm.ai/) — point `LLM_PARSE_MODEL` / `LLM_ADJUDICATE_MODEL` at any supported provider model.  
-Provider API keys follow LiteLLM env conventions (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.).  
-Prompt text lives only in files referenced by `LLM_*_PROMPT_PATH` — edit those files or override paths via env.
+Uses [LiteLLM](https://docs.litellm.ai/) — point `LLM_PARSE_MODEL` / `LLM_ADJUDICATE_MODEL` at **any** supported provider (`anthropic/`, `openai/`, `gemini/`, `azure/`, `groq/`, etc.).  
+Provider API keys follow LiteLLM env conventions — set only the key(s) for your chosen provider(s).  
+See `distribution/llm-providers.md` for examples and cost estimates.
 
 Attestation spec: `public/attestation-spec.md`

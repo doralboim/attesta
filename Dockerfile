@@ -14,9 +14,11 @@ COPY ops ./ops
 COPY public ./public
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY ops/entrypoint.sh ./ops/entrypoint.sh
+RUN chmod +x ./ops/entrypoint.sh
 
 RUN pip install --no-cache-dir -e .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./ops/entrypoint.sh"]

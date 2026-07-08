@@ -44,7 +44,7 @@ Submit in this order. Tool descriptions matter more than marketing copy — writ
 
 | Channel | URL | What to submit | Why |
 |---------|-----|----------------|-----|
-| Anthropic MCP Registry | https://github.com/modelcontextprotocol/servers | MCP manifest + public endpoint | Default discovery for Claude |
+| Anthropic MCP Registry | https://registry.modelcontextprotocol.io | `distribution/server.json` → `mcp-publisher publish` | Default discovery for Claude |
 | Smithery | https://smithery.ai | Hosted MCP listing | High-traffic MCP search |
 | PulseMCP | https://www.pulsemcp.com | Server listing | Agent builder audience |
 | mcpmarket.com | https://mcpmarket.com | Server listing | Long-tail discovery |
