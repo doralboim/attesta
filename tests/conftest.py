@@ -11,7 +11,10 @@ from app.db.models import Base  # noqa: E402
 from app.main import app  # noqa: E402
 
 TEST_DB = os.environ["DATABASE_URL"]
-engine = create_async_engine(TEST_DB, connect_args={"check_same_thread": False})
+_connect_args: dict[str, object] = {}
+if "sqlite" in TEST_DB:
+    _connect_args["check_same_thread"] = False
+engine = create_async_engine(TEST_DB, connect_args=_connect_args)
 TestSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
