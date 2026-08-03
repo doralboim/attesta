@@ -15,7 +15,7 @@ Lead with **measured** numbers when pitching humans; lead with **tool descriptio
 **Goal:** Live MCP + REST endpoint, listed in 3+ directories, first external agent usage generating revenue.
 
 ### Week 1 checklist
-- [x] FastAPI + MCP server with 6 tools
+- [x] FastAPI + MCP server with 7 tools (includes `get_comps`)
 - [x] Stripe metering scaffold
 - [x] x402 middleware scaffold
 - [x] JWS attestation on verify_claim
@@ -25,6 +25,7 @@ Lead with **measured** numbers when pitching humans; lead with **tool descriptio
 - [ ] Seed production Postgres via fixture ingest (or chosen live collector)
 - [ ] Deploy to Railway with public URL
 - [ ] Dogfood: internal agent workflows calling Attesta MCP/REST
+- [ ] Dogfood: **Financial Manager** as internal agent client — design-partner API key with elevated `monthly_free_calls` (e.g. 10k); **no metering bypass** (ADR-003). FM calls `get_market_stats` / `get_comps` / freshness for PT RE holdings.
 
 ### Week 2 checklist
 - [ ] Enable x402 on Base Sepolia → mainnet

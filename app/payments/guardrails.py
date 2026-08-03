@@ -25,9 +25,7 @@ class Guardrails:
             select(func.count())
             .select_from(UsageEvent)
             .where(UsageEvent.occurred_at >= since)
-            .where(
-                (UsageEvent.key_hash == identifier) | (UsageEvent.payer_address == identifier)
-            )
+            .where((UsageEvent.key_hash == identifier) | (UsageEvent.payer_address == identifier))
         )
         return (count or 0) < self.rate_limit_per_minute
 
@@ -36,14 +34,10 @@ class Guardrails:
         total = await self.session.scalar(
             select(func.coalesce(func.sum(UsageEvent.price_eur), 0))
             .where(UsageEvent.occurred_at >= since)
-            .where(
-                (UsageEvent.key_hash == identifier) | (UsageEvent.payer_address == identifier)
-            )
+            .where((UsageEvent.key_hash == identifier) | (UsageEvent.payer_address == identifier))
         )
         return float(total or 0) < self.daily_spend_cap_eur
 
     async def is_duplicate_request(self, request_id: str) -> bool:
-        existing = await self.session.scalar(
-            select(UsageEvent.id).where(UsageEvent.request_id == request_id)
-        )
+        existing = await self.session.scalar(select(UsageEvent.id).where(UsageEvent.request_id == request_id))
         return existing is not None

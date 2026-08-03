@@ -62,9 +62,7 @@ class MeteringService:
 
     def _default_stripe(self) -> StripeRail:
         if self.settings.stripe_secret_key:
-            return LiveStripeRail(
-                self.settings.stripe_secret_key, self.settings.stripe_meter_event_name
-            )
+            return LiveStripeRail(self.settings.stripe_secret_key, self.settings.stripe_meter_event_name)
         return FakeStripeRail()
 
     async def authorize(
@@ -79,9 +77,7 @@ class MeteringService:
         price = price_for_tool(tool)
 
         if await self.guardrails.is_duplicate_request(rid):
-            existing = await self.session.scalar(
-                select(UsageEvent).where(UsageEvent.request_id == rid)
-            )
+            existing = await self.session.scalar(select(UsageEvent).where(UsageEvent.request_id == rid))
             if existing:
                 return MeteringContext(
                     rail=existing.rail,
@@ -134,9 +130,7 @@ class MeteringService:
         await self._record_usage(ctx)
         return ctx
 
-    async def _authorize_api_key(
-        self, raw_key: str, tool: str, price: Decimal, request_id: str
-    ) -> MeteringContext:
+    async def _authorize_api_key(self, raw_key: str, tool: str, price: Decimal, request_id: str) -> MeteringContext:
         key_hash = hash_api_key(raw_key)
         api_key = await self.session.get(ApiKey, key_hash)
         if not api_key and raw_key == self.settings.bootstrap_api_key:
@@ -156,9 +150,7 @@ class MeteringService:
             price_eur=price if rail == "stripe" else Decimal("0"),
         )
 
-    async def _authorize_x402(
-        self, payment_header: str, tool: str, price: Decimal, request_id: str
-    ) -> MeteringContext:
+    async def _authorize_x402(self, payment_header: str, tool: str, price: Decimal, request_id: str) -> MeteringContext:
         verification = await self.x402.verify_payment(payment_header)
         if not verification.valid:
             raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Invalid payment")

@@ -147,17 +147,13 @@ class EvidenceRetriever:
         for ref in evidence_refs:
             kind, value = ref.split(":", 1) if ":" in ref else ("opaque", ref)
             if kind == "sha256":
-                snap = await self.session.scalar(
-                    select(Snapshot).where(Snapshot.content_hash == value).limit(1)
-                )
+                snap = await self.session.scalar(select(Snapshot).where(Snapshot.content_hash == value).limit(1))
             elif ref.startswith("snap:"):
                 snap = await self.session.get(Snapshot, int(ref.removeprefix("snap:")))
             else:
                 snap = None
             if snap:
-                obs = await self.session.scalar(
-                    select(Observation).where(Observation.snapshot_id == snap.id).limit(1)
-                )
+                obs = await self.session.scalar(select(Observation).where(Observation.snapshot_id == snap.id).limit(1))
                 snapshots.append(
                     {
                         "ref": ref,
@@ -232,9 +228,7 @@ class EvidenceRetriever:
 
         return None
 
-    async def _snapshot_evidence_for_property(
-        self, prop_id: uuid.UUID, history: dict | None
-    ) -> list[str]:
+    async def _snapshot_evidence_for_property(self, prop_id: uuid.UUID, history: dict | None) -> list[str]:
         refs: list[str] = []
         if history and history.get("events"):
             for event in history["events"]:
@@ -248,10 +242,14 @@ class EvidenceRetriever:
 
         if not refs:
             links = (
-                await self.session.execute(
-                    select(PropertyObservation).where(PropertyObservation.property_id == prop_id)
+                (
+                    await self.session.execute(
+                        select(PropertyObservation).where(PropertyObservation.property_id == prop_id)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             for link in links:
                 obs = await self.session.get(Observation, link.observation_id)
                 if obs:

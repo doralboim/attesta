@@ -11,14 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import __version__
 from app.db.session import get_db
 from app.payments.metering import MeteringService
-from app.serving.tools import SearchFilters, ToolService
+from app.serving.tools import CompsFilters, MarketStatsFilters, SearchFilters, ToolService
 
 router = APIRouter(prefix="/v1")
-
-
-class MarketStatsRequest(BaseModel):
-    region: str | None = None
-    city: str | None = None
 
 
 class VerifyClaimRequest(BaseModel):
@@ -98,7 +93,7 @@ async def get_price_history(
 @router.post("/market/stats")
 async def get_market_stats(
     request: Request,
-    body: MarketStatsRequest,
+    body: MarketStatsFilters,
     db: AsyncSession = Depends(get_db),
     x_api_key: str | None = Header(default=None),
     x_payment: str | None = Header(default=None),
@@ -110,7 +105,25 @@ async def get_market_stats(
         payment_header=x_payment,
         request_id=_request_id(request),
     )
-    return await ToolService(db).get_market_stats(body.region, body.city)
+    return await ToolService(db).get_market_stats(body)
+
+
+@router.post("/comps")
+async def get_comps(
+    request: Request,
+    body: CompsFilters,
+    db: AsyncSession = Depends(get_db),
+    x_api_key: str | None = Header(default=None),
+    x_payment: str | None = Header(default=None),
+) -> dict:
+    metering = MeteringService(db)
+    await metering.authorize(
+        "get_comps",
+        api_key=x_api_key,
+        payment_header=x_payment,
+        request_id=_request_id(request),
+    )
+    return await ToolService(db).get_comps(body)
 
 
 @router.get("/listings/freshness/{property_id}")

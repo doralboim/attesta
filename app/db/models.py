@@ -52,9 +52,7 @@ class Snapshot(Base):
 
 class Observation(Base):
     __tablename__ = "observations"
-    __table_args__ = (
-        Index("ix_observations_source_listing", "source", "source_listing_id", "observed_at"),
-    )
+    __table_args__ = (Index("ix_observations_source_listing", "source", "source_listing_id", "observed_at"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     snapshot_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("snapshots.id"), nullable=False)
@@ -72,18 +70,14 @@ class Observation(Base):
     )
 
     snapshot: Mapped[Snapshot] = relationship(back_populates="observations")
-    property_links: Mapped[list[PropertyObservation]] = relationship(
-        back_populates="observation"
-    )
+    property_links: Mapped[list[PropertyObservation]] = relationship(back_populates="observation")
 
 
 class Property(Base):
     __tablename__ = "properties"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    canonical_attrs: Mapped[dict] = mapped_column(
-        JSON().with_variant(JSONB, "postgresql"), nullable=False
-    )
+    canonical_attrs: Mapped[dict] = mapped_column(JSON().with_variant(JSONB, "postgresql"), nullable=False)
     region: Mapped[str] = mapped_column(Text, nullable=False)
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -100,12 +94,8 @@ class Property(Base):
 class PropertyObservation(Base):
     __tablename__ = "property_observations"
 
-    property_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("properties.id"), primary_key=True
-    )
-    observation_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("observations.id"), primary_key=True
-    )
+    property_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("properties.id"), primary_key=True)
+    observation_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("observations.id"), primary_key=True)
     match_confidence: Mapped[float] = mapped_column(Float, nullable=False)
 
     property: Mapped[Property] = relationship(back_populates="observations")
@@ -116,9 +106,7 @@ class PriceEvent(Base):
     __tablename__ = "price_events"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    property_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("properties.id"), nullable=False
-    )
+    property_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("properties.id"), nullable=False)
     event_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     kind: Mapped[str] = mapped_column(Text, nullable=False)
     price_eur: Mapped[float | None] = mapped_column(Numeric)
@@ -151,9 +139,7 @@ class UsageEvent(Base):
     tool: Mapped[str] = mapped_column(Text, nullable=False)
     price_eur: Mapped[float] = mapped_column(Numeric, nullable=False)
     request_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
-    x402_receipt: Mapped[dict | None] = mapped_column(
-        JSON().with_variant(JSONB, "postgresql"), nullable=True
-    )
+    x402_receipt: Mapped[dict | None] = mapped_column(JSON().with_variant(JSONB, "postgresql"), nullable=True)
     stripe_pushed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
@@ -165,8 +151,6 @@ class Attestation(Base):
     claim: Mapped[str] = mapped_column(Text, nullable=False)
     verdicts: Mapped[dict] = mapped_column(JSON().with_variant(JSONB, "postgresql"), nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
-    evidence_hashes: Mapped[list[str]] = mapped_column(
-        ARRAY(Text).with_variant(JSON, "sqlite"), nullable=False
-    )
+    evidence_hashes: Mapped[list[str]] = mapped_column(ARRAY(Text).with_variant(JSON, "sqlite"), nullable=False)
     jws: Mapped[str] = mapped_column(Text, nullable=False)
     usage_event_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("usage_events.id"))

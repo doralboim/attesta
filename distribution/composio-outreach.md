@@ -10,7 +10,7 @@ We built **Attesta** — a metered MCP server selling provenance-grade Portugal 
 
 **Tools (6):**
 - `search_listings` — deduplicated PT residential search
-- `get_property` / `get_price_history` / `get_market_stats`
+- `get_property` / `get_price_history` / `get_market_stats` / `get_comps`
 - `check_listing_freshness` — phantom/delisted detection
 - `verify_claim` — natural-language claim → verdicts + ES256 JWS attestation
 

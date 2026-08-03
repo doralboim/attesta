@@ -38,9 +38,7 @@ class EvidenceService:
         kind, value = parse_evidence_ref(evidence_ref)
 
         if kind == "content_hash":
-            snap = await self.session.scalar(
-                select(Snapshot).where(Snapshot.content_hash == value).limit(1)
-            )
+            snap = await self.session.scalar(select(Snapshot).where(Snapshot.content_hash == value).limit(1))
         elif kind == "snapshot_id":
             snap = await self.session.get(Snapshot, int(value))
         else:
@@ -49,9 +47,7 @@ class EvidenceService:
         if not snap:
             return None
 
-        obs = await self.session.scalar(
-            select(Observation).where(Observation.snapshot_id == snap.id).limit(1)
-        )
+        obs = await self.session.scalar(select(Observation).where(Observation.snapshot_id == snap.id).limit(1))
 
         return {
             "ref": evidence_ref,

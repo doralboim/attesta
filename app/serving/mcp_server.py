@@ -1,4 +1,4 @@
-"""MCP server — six tools sharing implementations with REST."""
+"""MCP server — tools sharing implementations with REST."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from fastmcp import FastMCP
 from app.db.session import async_session_factory
 from app.payments.metering import MeteringService
 from app.serving import descriptions as desc
-from app.serving.tools import SearchFilters, ToolService
+from app.serving.tools import CompsFilters, MarketStatsFilters, SearchFilters, ToolService
 from app.verification.pipeline import VerificationPipeline
 
 mcp = FastMCP(
@@ -67,11 +67,52 @@ async def get_price_history(property_id: str, api_key: str | None = None) -> dic
 
 @mcp.tool(name="get_market_stats", description=desc.GET_MARKET_STATS)
 async def get_market_stats(
-    region: str | None = None, city: str | None = None, api_key: str | None = None
+    region: str | None = None,
+    city: str | None = None,
+    typology: str | None = None,
+    min_area_m2: float | None = None,
+    max_area_m2: float | None = None,
+    api_key: str | None = None,
 ) -> dict:
     await _metered("get_market_stats", api_key=api_key)
     async with async_session_factory() as session:
-        return await ToolService(session).get_market_stats(region, city)
+        return await ToolService(session).get_market_stats(
+            MarketStatsFilters(
+                region=region,
+                city=city,
+                typology=typology,
+                min_area_m2=min_area_m2,
+                max_area_m2=max_area_m2,
+            )
+        )
+
+
+@mcp.tool(name="get_comps", description=desc.GET_COMPS)
+async def get_comps(
+    region: str,
+    area_m2: float,
+    city: str | None = None,
+    typology: str | None = None,
+    area_tolerance_pct: float = 15.0,
+    geo_radius_m: float | None = None,
+    property_id: str | None = None,
+    limit: int = 20,
+    api_key: str | None = None,
+) -> dict:
+    await _metered("get_comps", api_key=api_key)
+    async with async_session_factory() as session:
+        return await ToolService(session).get_comps(
+            CompsFilters(
+                region=region,
+                city=city,
+                typology=typology,
+                area_m2=area_m2,
+                area_tolerance_pct=area_tolerance_pct,
+                geo_radius_m=geo_radius_m,
+                property_id=uuid.UUID(property_id) if property_id else None,
+                limit=limit,
+            )
+        )
 
 
 @mcp.tool(name="check_listing_freshness", description=desc.CHECK_LISTING_FRESHNESS)
@@ -83,9 +124,7 @@ async def check_listing_freshness(property_id: str, api_key: str | None = None) 
 
 
 @mcp.tool(name="verify_claim", description=desc.VERIFY_CLAIM)
-async def verify_claim(
-    claim: str, depth: str = "corpus", api_key: str | None = None
-) -> dict:
+async def verify_claim(claim: str, depth: str = "corpus", api_key: str | None = None) -> dict:
     tool = "verify_claim_deep" if depth == "deep" else "verify_claim_corpus"
     ctx = await _metered(tool, api_key=api_key)
     async with async_session_factory() as session:

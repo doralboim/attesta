@@ -43,9 +43,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(
-            logging.getLevelName(settings.log_level)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(logging.getLevelName(settings.log_level)),
     )
 
     app = FastAPI(
@@ -86,9 +84,7 @@ def create_app() -> FastAPI:
     async def jwks() -> JSONResponse:
         return JSONResponse(AttestationSigner().public_jwks())
 
-    mcp_app = mcp_server.mcp.http_app(
-        path="/", transport="streamable-http", stateless_http=True
-    )
+    mcp_app = mcp_server.mcp.http_app(path="/", transport="streamable-http", stateless_http=True)
     app.mount("/mcp", mcp_app)
 
     return app
