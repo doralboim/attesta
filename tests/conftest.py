@@ -2,7 +2,9 @@ import os
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test_attesta.db")
@@ -11,13 +13,22 @@ from app.db.models import Base  # noqa: E402
 from app.main import app  # noqa: E402
 
 TEST_DB = os.environ["DATABASE_URL"]
-engine = create_async_engine(TEST_DB, connect_args={"check_same_thread": False})
+_connect_args: dict[str, object] = {}
+_engine_kwargs: dict[str, object] = {"connect_args": _connect_args}
+if "sqlite" in TEST_DB:
+    _connect_args["check_same_thread"] = False
+else:
+    # Avoid sticky pooled connections across pytest-asyncio loop boundaries.
+    _engine_kwargs["poolclass"] = NullPool
+engine = create_async_engine(TEST_DB, **_engine_kwargs)
 TestSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 @pytest.fixture(scope="session", autouse=True)
 async def setup_database():
     async with engine.begin() as conn:
+        if "sqlite" not in TEST_DB:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield

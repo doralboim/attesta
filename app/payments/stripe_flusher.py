@@ -66,14 +66,18 @@ class StripeUsageFlusher:
         pushed = 0
         async with async_session_factory() as session:
             pending = (
-                await session.execute(
-                    select(UsageEvent)
-                    .where(UsageEvent.rail == "stripe")
-                    .where(UsageEvent.stripe_pushed.is_(False))
-                    .order_by(UsageEvent.id)
-                    .limit(100)
+                (
+                    await session.execute(
+                        select(UsageEvent)
+                        .where(UsageEvent.rail == "stripe")
+                        .where(UsageEvent.stripe_pushed.is_(False))
+                        .order_by(UsageEvent.id)
+                        .limit(100)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
             for event in pending:
                 if not event.key_hash:

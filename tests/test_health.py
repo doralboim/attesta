@@ -24,7 +24,10 @@ async def test_mcp_server_card(client: AsyncClient) -> None:
     assert resp.status_code == 200
     data = resp.json()
     assert data["serverInfo"]["name"] == "Attesta"
-    assert len(data["tools"]) == 6
+    tool_names = {t["name"] for t in data["tools"]}
+    assert "get_comps" in tool_names
+    assert "get_market_stats" in tool_names
+    assert len(data["tools"]) == 7
 
 
 @pytest.mark.asyncio

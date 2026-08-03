@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Observation, PriceEvent, Property, PropertyObservation
 from app.resolution.embeddings import cosine_similarity
+from app.resolution.staleness import compute_staleness, price_per_m2
 
 
 def _utc(dt: datetime) -> datetime:
@@ -34,8 +35,8 @@ def _attrs_match(a: dict, b: dict, tolerance_m2: float = 5.0) -> float:
     return score / checks if checks else 0.0
 
 
-def _geo_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Haversine approximation."""
+def geo_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Haversine approximation in kilometres."""
     from math import asin, cos, radians, sin, sqrt
 
     r = 6371
@@ -43,6 +44,10 @@ def _geo_distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
     dlon = radians(lon2 - lon1)
     a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
     return 2 * r * asin(sqrt(a))
+
+
+# Back-compat alias
+_geo_distance_km = geo_distance_km
 
 
 class ResolutionService:
@@ -56,9 +61,7 @@ class ResolutionService:
     async def resolve_all(self) -> int:
         """Match unlinked observations to properties."""
         result = await self.session.execute(
-            select(Observation).where(
-                ~Observation.id.in_(select(PropertyObservation.observation_id))
-            )
+            select(Observation).where(~Observation.id.in_(select(PropertyObservation.observation_id)))
         )
         observations = list(result.scalars().all())
         linked = 0
@@ -132,7 +135,7 @@ class ResolutionService:
         plat = prop.canonical_attrs.get("geo_lat")
         plon = prop.canonical_attrs.get("geo_lon")
         if plat and plon and obs.geo_lat and obs.geo_lon:
-            dist = _geo_distance_km(float(plat), float(plon), obs.geo_lat, obs.geo_lon)
+            dist = geo_distance_km(float(plat), float(plon), obs.geo_lat, obs.geo_lon)
             if dist > self.GEO_BLOCK_KM * 10:
                 return 0.0
             geo_score = 1.0 if dist <= self.GEO_BLOCK_KM else max(0, 1 - dist / 5)
@@ -148,31 +151,39 @@ class ResolutionService:
 
     async def _latest_linked_observation(self, property_id: uuid.UUID) -> Observation | None:
         links = (
-            await self.session.execute(
-                select(PropertyObservation).where(PropertyObservation.property_id == property_id)
+            (
+                await self.session.execute(
+                    select(PropertyObservation).where(PropertyObservation.property_id == property_id)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         if not links:
             return None
         obs_ids = [link.observation_id for link in links]
         return (
-            await self.session.execute(
-                select(Observation).where(Observation.id.in_(obs_ids)).order_by(Observation.observed_at.desc())
+            (
+                await self.session.execute(
+                    select(Observation).where(Observation.id.in_(obs_ids)).order_by(Observation.observed_at.desc())
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
 
     async def _update_derived_fields(self, prop: Property) -> None:
         links = (
-            await self.session.execute(
-                select(PropertyObservation).where(PropertyObservation.property_id == prop.id)
-            )
-        ).scalars().all()
+            (await self.session.execute(select(PropertyObservation).where(PropertyObservation.property_id == prop.id)))
+            .scalars()
+            .all()
+        )
         obs_ids = [link.observation_id for link in links]
         if not obs_ids:
             return
         observations = (
-            await self.session.execute(select(Observation).where(Observation.id.in_(obs_ids)))
-        ).scalars().all()
+            (await self.session.execute(select(Observation).where(Observation.id.in_(obs_ids)))).scalars().all()
+        )
 
         prop.last_seen = max(_utc(o.observed_at) for o in observations)
         prop.first_seen = min(_utc(o.observed_at) for o in observations)
@@ -181,11 +192,49 @@ class ResolutionService:
         if active:
             prop.current_price_eur = float(active[-1].price_eur) if active[-1].price_eur else None
         prop.days_on_market = (datetime.now(UTC) - _utc(prop.first_seen)).days
-        sources = len({o.source for o in observations})
+        source_prices = [float(o.price_eur) for o in observations if o.status != "delisted" and o.price_eur is not None]
+        # Latest price per source for disagreement
+        latest_by_source: dict[str, float] = {}
+        for o in sorted(observations, key=lambda x: _utc(x.observed_at)):
+            if o.status != "delisted" and o.price_eur is not None:
+                latest_by_source[o.source] = float(o.price_eur)
+        sources = len(latest_by_source) or len({o.source for o in observations})
         recency_days = (datetime.now(UTC) - _utc(prop.last_seen)).days
-        prop.staleness_score = min(1.0, recency_days / 90) * (1.0 if sources < 2 else 0.5)
+        area = prop.canonical_attrs.get("area_m2")
+        ppm2 = price_per_m2(prop.current_price_eur, area)
+        region_median = await self._region_median_m2(prop.region, exclude_id=prop.id)
+        score, components = compute_staleness(
+            recency_days=recency_days,
+            source_count=sources,
+            source_prices=list(latest_by_source.values()) or source_prices,
+            price_per_m2=ppm2,
+            region_median_m2=region_median,
+        )
+        prop.staleness_score = score
+        # Persist components for API reads without recomputing priors
+        attrs = dict(prop.canonical_attrs or {})
+        attrs["staleness_components"] = components
+        prop.canonical_attrs = attrs
 
         await self._emit_price_events(prop, observations)
+
+    async def _region_median_m2(self, region: str, *, exclude_id: uuid.UUID | None = None) -> float | None:
+        """Cheap region prior: median €/m² of other active listings in region."""
+        from statistics import median
+
+        stmt = select(Property).where(Property.region == region).where(Property.is_active.is_(True))
+        props = (await self.session.execute(stmt)).scalars().all()
+        values: list[float] = []
+        for p in props:
+            if exclude_id and p.id == exclude_id:
+                continue
+            price = float(p.current_price_eur) if p.current_price_eur else None
+            ppm2 = price_per_m2(price, p.canonical_attrs.get("area_m2"))
+            if ppm2 is not None:
+                values.append(ppm2)
+        if len(values) < 2:
+            return None
+        return float(median(values))
 
     async def _emit_price_events(self, prop: Property, observations: list[Observation]) -> None:
         sorted_obs = sorted(observations, key=lambda o: o.observed_at)

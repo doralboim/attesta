@@ -52,10 +52,14 @@ async def test_resolution_merges_cross_portal_duplicates(db_session) -> None:
     faro_props = [p for p in props if p.canonical_attrs.get("city") == "Faro" and p.is_active]
     assert len(faro_props) == 1
     links = (
-        await db_session.execute(
-            select(PropertyObservation).where(PropertyObservation.property_id == faro_props[0].id)
+        (
+            await db_session.execute(
+                select(PropertyObservation).where(PropertyObservation.property_id == faro_props[0].id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(links) == 2
 
 

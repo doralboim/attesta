@@ -113,13 +113,17 @@ class IngestionService:
         delisted_count = 0
 
         active_observations = (
-            await self.session.execute(
-                select(Observation)
-                .where(Observation.source == source)
-                .where(Observation.status != "delisted")
-                .order_by(Observation.source_listing_id, Observation.observed_at.desc())
+            (
+                await self.session.execute(
+                    select(Observation)
+                    .where(Observation.source == source)
+                    .where(Observation.status != "delisted")
+                    .order_by(Observation.source_listing_id, Observation.observed_at.desc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         latest_by_listing: dict[str, Observation] = {}
         for obs in active_observations:
@@ -183,27 +187,31 @@ class IngestionService:
 
     async def _properties_for_source_listing(self, source: str, listing_id: str) -> list[Property]:
         observations = (
-            await self.session.execute(
-                select(Observation).where(
-                    Observation.source == source,
-                    Observation.source_listing_id == listing_id,
+            (
+                await self.session.execute(
+                    select(Observation).where(
+                        Observation.source == source,
+                        Observation.source_listing_id == listing_id,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         if not observations:
             return []
 
         obs_ids = [o.id for o in observations]
         links = (
-            await self.session.execute(
-                select(PropertyObservation).where(PropertyObservation.observation_id.in_(obs_ids))
+            (
+                await self.session.execute(
+                    select(PropertyObservation).where(PropertyObservation.observation_id.in_(obs_ids))
+                )
             )
-        ).scalars().all()
-        prop_ids = {link.property_id for link in links}
-        if not prop_ids:
-            return []
-        return list(
-            (await self.session.execute(select(Property).where(Property.id.in_(prop_ids))))
             .scalars()
             .all()
         )
+        prop_ids = {link.property_id for link in links}
+        if not prop_ids:
+            return []
+        return list((await self.session.execute(select(Property).where(Property.id.in_(prop_ids)))).scalars().all())

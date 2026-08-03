@@ -53,9 +53,7 @@ async def test_attestation_persisted(pipeline_ready, db_session: AsyncSession) -
     result = await VerificationPipeline(db_session).verify("T2 in Faro €240,000", persist=True)
     assert result["attestation_id"]
 
-    row = await db_session.scalar(
-        select(Attestation).where(Attestation.id == uuid.UUID(result["attestation_id"]))
-    )
+    row = await db_session.scalar(select(Attestation).where(Attestation.id == uuid.UUID(result["attestation_id"])))
     assert row is not None
     assert row.jws == result["jws"]
     assert row.claim == "T2 in Faro €240,000"

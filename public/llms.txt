@@ -27,9 +27,10 @@ Set `PUBLIC_BASE_URL` in deployment. Local dev: `http://localhost:8000`
 | Tool | When to use | Price (EUR) |
 |------|-------------|-------------|
 | `search_listings` | Find properties by region/city/price | 0.01 |
-| `get_property` | Canonical record + sources + staleness | 0.01 |
+| `get_property` | Canonical record + sources + staleness components | 0.01 |
 | `get_price_history` | Price cuts, delistings, days on market | 0.02 |
-| `get_market_stats` | Median price, inventory, stale rate | 0.02 |
+| `get_market_stats` | Median €/m², inventory, stale rate, DOM (envelope 1.0) | 0.02 |
+| `get_comps` | Comparable actives by area ±tolerance (envelope 1.0) | 0.02 |
 | `check_listing_freshness` | Before recommending — phantom/delisted check | 0.02 |
 | `verify_claim` | Signed proof for a natural-language claim | 0.02–0.08 |
 
@@ -47,3 +48,7 @@ Portugal residential (`residential_pt`). Default corpus from bundled fixtures; l
 ## Attestation spec
 
 See `/public/attestation-spec.md` or repo `public/attestation-spec.md`.
+
+## Market data contract
+
+Versioned envelopes for `get_market_stats` / `get_comps`: `public/market-data-contract.md`.

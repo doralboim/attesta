@@ -51,19 +51,41 @@
     },
     {
       "name": "get_market_stats",
-      "description": "Aggregate market stats: median price/m², inventory count, stale listing rate. Cost: €0.02 per call.",
+      "description": "Aggregate market stats in envelope 1.0: median €/m² (p25/p75), inventory, stale_rate, median days on market. Cost: €0.02 per call.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "region": { "type": "string" },
           "city": { "type": "string" },
+          "typology": { "type": "string" },
+          "min_area_m2": { "type": "number" },
+          "max_area_m2": { "type": "number" },
           "api_key": { "type": "string" }
         }
       }
     },
     {
+      "name": "get_comps",
+      "description": "Comparable active listings by area_m2 ±tolerance; returns comps + median €/m² in envelope 1.0. Cost: €0.02 per call.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": { "type": "string" },
+          "city": { "type": "string" },
+          "typology": { "type": "string" },
+          "area_m2": { "type": "number" },
+          "area_tolerance_pct": { "type": "number", "default": 15 },
+          "geo_radius_m": { "type": "number" },
+          "property_id": { "type": "string", "format": "uuid" },
+          "limit": { "type": "integer", "default": 20, "maximum": 50 },
+          "api_key": { "type": "string" }
+        },
+        "required": ["region", "area_m2"]
+      }
+    },
+    {
       "name": "check_listing_freshness",
-      "description": "Check if a property is fresh, stale, or likely phantom/delisted. Cost: €0.02 per call.",
+      "description": "Check if a property is fresh, stale, or likely phantom/delisted; includes staleness_components. Cost: €0.02 per call.",
       "inputSchema": {
         "type": "object",
         "properties": {

@@ -165,11 +165,14 @@ Design invariants: **snapshots are append-only** (provenance breaks if you mutat
 | Tool | Params | Price tier |
 |---|---|---|
 | `search_listings` | region, filters (price range, typology, area), sort, limit≤50 | query (€0.01) |
-| `get_property` | property_id → canonical record + sources + staleness | query (€0.01) |
+| `get_property` | property_id → canonical record + sources + staleness + components | query (€0.01) |
 | `get_price_history` | property_id → price_events timeline | query (€0.02) |
-| `get_market_stats` | region, window → median price/m², inventory, velocity | query (€0.02) |
-| `check_listing_freshness` | url or property_id → active?, last corroboration, staleness score | query (€0.02) |
+| `get_market_stats` | region/city/typology/area band → median € & €/m², inventory, velocity (envelope 1.0) | query (€0.02) |
+| `get_comps` | region, area_m2 ±tolerance → comparable actives + median €/m² (envelope 1.0) | query (€0.02) |
+| `check_listing_freshness` | property_id → active?, last corroboration, staleness score + components | query (€0.02) |
 | `verify_claim` | claim (text), depth ('corpus'\|'deep') → verdicts + attestation | €0.02 / €0.05–0.10 |
+
+Market observation responses use the versioned envelope in `public/market-data-contract.md`. Staleness formula: `docs/decisions/009-staleness-v1.md`.
 
 Tool descriptions must state capability, coverage ("residential listings, Portugal, updated <6h"), cost per call, and one example invocation — written for model tool-selection. Same functions exposed as REST under `/v1/*` with an OpenAPI spec; publish `/llms.txt` describing the service for agent discovery.
 

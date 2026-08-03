@@ -79,4 +79,5 @@ Uses [LiteLLM](https://docs.litellm.ai/) — point `LLM_PARSE_MODEL` / `LLM_ADJU
 Provider API keys follow LiteLLM env conventions — set only the key(s) for your chosen provider(s).  
 See `distribution/llm-providers.md` for examples and cost estimates.
 
-Attestation spec: `public/attestation-spec.md`
+Attestation spec: `public/attestation-spec.md`  
+Market data contract (stats/comps envelopes): `public/market-data-contract.md`
