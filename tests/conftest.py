@@ -2,6 +2,7 @@ import os
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 os.environ.setdefault("ENVIRONMENT", "test")
@@ -21,6 +22,8 @@ TestSession = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 @pytest.fixture(scope="session", autouse=True)
 async def setup_database():
     async with engine.begin() as conn:
+        if "sqlite" not in TEST_DB:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
