@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.db.models import Base
 from app.db.session import engine
 from app.serving import mcp_server
+from app.serving.admin import router as admin_router
 from app.serving.rest import router as rest_router
 from app.verification.attest import AttestationSigner
 
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(rest_router)
+    app.include_router(admin_router)
 
     @app.get("/healthz")
     async def root_healthz() -> dict[str, str]:

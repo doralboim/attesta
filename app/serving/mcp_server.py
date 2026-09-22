@@ -124,12 +124,27 @@ async def check_listing_freshness(property_id: str, api_key: str | None = None) 
 
 
 @mcp.tool(name="verify_claim", description=desc.VERIFY_CLAIM)
-async def verify_claim(claim: str, depth: str = "corpus", api_key: str | None = None) -> dict:
-    tool = "verify_claim_deep" if depth == "deep" else "verify_claim_corpus"
+async def verify_claim(
+    claim: str | None = None,
+    url: str | None = None,
+    depth: str = "corpus",
+    api_key: str | None = None,
+) -> dict:
+    if bool(claim) == bool(url):
+        return {"error": "Provide exactly one of claim or url"}
+    if url:
+        tool = "verify_url"
+    elif depth == "deep":
+        tool = "verify_claim_deep"
+    else:
+        tool = "verify_claim_corpus"
     ctx = await _metered(tool, api_key=api_key)
     async with async_session_factory() as session:
-        return await VerificationPipeline(session).verify(
-            claim,
+        pipeline = VerificationPipeline(session)
+        if url:
+            return await pipeline.verify_url(url, usage_event_id=ctx.usage_event_id)
+        return await pipeline.verify(
+            claim or "",
             depth=depth,
             usage_event_id=ctx.usage_event_id,
         )

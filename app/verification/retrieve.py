@@ -4,17 +4,21 @@ from __future__ import annotations
 
 import uuid
 
+import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Observation, PropertyObservation, Snapshot
-from app.ingestion.fixture_collector import FixtureCollector
 from app.ingestion.pipeline import IngestionService
+from app.ingestion.url_dispatch import UnsupportedListingUrlError, resolve_collector_for_url
 from app.llm.factory import llm_is_configured
+from app.resolution.matcher import ResolutionService
 from app.serving.tools import SearchFilters, ToolService
 from app.verification.adjudicate import adjudicate_with_llm
 from app.verification.evidence import snapshot_hash_ref, snapshot_id_ref
 from app.verification.parse import parse_claim
+
+logger = structlog.get_logger()
 
 
 class EvidenceRetriever:
@@ -44,7 +48,10 @@ class EvidenceRetriever:
         freshness = await self.tools.check_listing_freshness(prop_id)
 
         if depth == "deep":
-            await self._live_refresh()
+            await self._refresh_listing_from_source(prop_id)
+            refreshed = await self.tools.get_property(prop_id)
+            if refreshed:
+                listing = refreshed
 
         evidence_bundle = await self._build_evidence_bundle(
             claim=claim,
@@ -57,13 +64,89 @@ class EvidenceRetriever:
 
         if llm_is_configured():
             verdicts = await adjudicate_with_llm(claim, predicates, evidence_bundle)
-            all_evidence = _collect_evidence_refs(verdicts)
-            return verdicts, all_evidence
-
-        verdicts, all_evidence = await self._adjudicate_deterministic(
-            claim, predicates, listing, history, freshness, prop_id
-        )
+        else:
+            verdicts, _ = await self._adjudicate_deterministic(claim, predicates, listing, history, freshness, prop_id)
+        verdicts = await self._annotate_source_classes(verdicts)
+        all_evidence = _collect_evidence_refs(verdicts)
         return verdicts, all_evidence
+
+    async def gather_verdicts_for_url(self, url: str) -> tuple[list[dict], list[str]]:
+        """Fetch one listing URL, ingest, resolve, and issue a single-source receipt."""
+        try:
+            collector = resolve_collector_for_url(url)
+        except UnsupportedListingUrlError as exc:
+            return (
+                [
+                    {
+                        "predicate": "url",
+                        "verdict": "UNVERIFIABLE",
+                        "evidence": [],
+                        "source_classes": [],
+                        "notes": str(exc),
+                    }
+                ],
+                [],
+            )
+
+        listing = await collector.fetch_listing_by_url(url)
+        if listing is None:
+            return (
+                [
+                    {
+                        "predicate": "url",
+                        "verdict": "UNVERIFIABLE",
+                        "evidence": [],
+                        "source_classes": [],
+                        "notes": "Source returned no listing for this URL.",
+                    }
+                ],
+                [],
+            )
+
+        ingest = IngestionService(self.session)
+        obs = await ingest.ingest_one(listing)
+        await ResolutionService(self.session).resolve_all()
+
+        snap = await self.session.get(Snapshot, obs.snapshot_id)
+        evidence = [snapshot_hash_ref(snap.content_hash)] if snap else []
+        source_class = obs.source_class or "portal"
+
+        verdicts: list[dict] = []
+        if obs.price_eur is not None:
+            verdicts.append(
+                {
+                    "predicate": f"price={float(obs.price_eur)}",
+                    "verdict": "CORROBORATED",
+                    "evidence": evidence,
+                    "sources": 1,
+                    "source_classes": [source_class],
+                    "notes": "Single-source observation from the supplied URL.",
+                }
+            )
+        status = (obs.status or "").lower()
+        if status:
+            label = "CORROBORATED" if status != "delisted" else "CONTRADICTED"
+            verdicts.append(
+                {
+                    "predicate": "availability",
+                    "verdict": label,
+                    "evidence": evidence,
+                    "sources": 1,
+                    "source_classes": [source_class],
+                    "notes": f"Observed status={obs.status} at URL.",
+                }
+            )
+        if not verdicts:
+            verdicts.append(
+                {
+                    "predicate": "url",
+                    "verdict": "UNVERIFIABLE",
+                    "evidence": evidence,
+                    "source_classes": [source_class],
+                    "notes": "Fetched listing had no price or status to adjudicate.",
+                }
+            )
+        return verdicts, _collect_evidence_refs(verdicts)
 
     async def _adjudicate_deterministic(
         self,
@@ -163,6 +246,7 @@ class EvidenceRetriever:
                         "content_hash": snap.content_hash,
                         "price_eur": float(obs.price_eur) if obs and obs.price_eur else None,
                         "status": obs.status if obs else None,
+                        "source_class": obs.source_class if obs else "portal",
                     }
                 )
 
@@ -259,8 +343,79 @@ class EvidenceRetriever:
 
         return refs or [f"property:{prop_id}"]
 
-    async def _live_refresh(self) -> None:
-        await IngestionService(self.session).ingest_collector(FixtureCollector())
+    async def _refresh_listing_from_source(self, prop_id: uuid.UUID) -> None:
+        """Re-fetch the matched property's last-known source URL. Fail soft."""
+        url = await self._latest_source_url(prop_id)
+        if not url:
+            logger.info("deep_refresh_skipped", property_id=str(prop_id), reason="no_source_url")
+            return
+        try:
+            collector = resolve_collector_for_url(url)
+            listing = await collector.fetch_listing_by_url(url)
+            if listing is None:
+                logger.info("deep_refresh_empty", property_id=str(prop_id), url=url)
+                return
+            await IngestionService(self.session).ingest_one(listing)
+            await ResolutionService(self.session).resolve_all()
+        except Exception:
+            logger.exception("deep_refresh_failed", property_id=str(prop_id), url=url)
+
+    async def _latest_source_url(self, prop_id: uuid.UUID) -> str | None:
+        links = (
+            (await self.session.execute(select(PropertyObservation).where(PropertyObservation.property_id == prop_id)))
+            .scalars()
+            .all()
+        )
+        if not links:
+            return None
+        obs_ids = [link.observation_id for link in links]
+        obs = (
+            (
+                await self.session.execute(
+                    select(Observation)
+                    .where(Observation.id.in_(obs_ids))
+                    .order_by(Observation.observed_at.desc())
+                    .limit(1)
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if not obs:
+            return None
+        snap = await self.session.get(Snapshot, obs.snapshot_id)
+        return snap.url if snap else None
+
+    async def _annotate_source_classes(self, verdicts: list[dict]) -> list[dict]:
+        annotated: list[dict] = []
+        for verdict in verdicts:
+            v = dict(verdict)
+            refs = list(v.get("evidence") or [])
+            v["source_classes"] = await self._source_classes_for_refs(refs)
+            annotated.append(v)
+        return annotated
+
+    async def _source_classes_for_refs(self, refs: list[str]) -> list[str]:
+        classes: list[str] = []
+        seen: set[str] = set()
+        for ref in refs:
+            kind, value = ref.split(":", 1) if ":" in ref else ("opaque", ref)
+            snap = None
+            if kind == "sha256":
+                snap = await self.session.scalar(select(Snapshot).where(Snapshot.content_hash == value).limit(1))
+            elif ref.startswith("snap:"):
+                try:
+                    snap = await self.session.get(Snapshot, int(ref.removeprefix("snap:")))
+                except ValueError:
+                    snap = None
+            if not snap:
+                continue
+            obs = await self.session.scalar(select(Observation).where(Observation.snapshot_id == snap.id).limit(1))
+            source_class = (obs.source_class if obs else None) or "portal"
+            if source_class not in seen:
+                seen.add(source_class)
+                classes.append(source_class)
+        return classes
 
 
 def _collect_evidence_refs(verdicts: list[dict]) -> list[str]:

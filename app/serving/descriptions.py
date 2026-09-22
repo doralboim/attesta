@@ -44,7 +44,11 @@ CHECK_LISTING_FRESHNESS = (
 )
 
 VERIFY_CLAIM = (
-    "Verify a natural-language property claim; returns per-predicate verdicts and signed JWS attestation. "
-    "Depth corpus (€0.02) or deep with live fetch (€0.08). "
-    "Example: verify_claim(claim='T2 in Faro €240k, 40 days on market', depth='corpus')"
+    "Verify a natural-language property claim or a listing URL; returns per-predicate "
+    "verdicts and a signed JWS receipt. Provide exactly one of claim or url. "
+    "Claim + corpus (€0.02) uses stored snapshots. Claim + deep (€0.08) re-fetches the "
+    "matched listing's last-known source URL before adjudicating. url (€0.08) fetches "
+    "that address, writes a snapshot, and issues a single-source receipt. "
+    "Example: verify_claim(claim='T2 in Faro €240k, 40 days on market', depth='corpus') "
+    "or verify_claim(url='https://idealista.pt/imovel/1001')"
 )

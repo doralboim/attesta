@@ -17,6 +17,7 @@ class RawListing:
     geo_lat: float | None = None
     geo_lon: float | None = None
     raw_payload: dict | None = None
+    source_class: str = "portal"
 
 
 class BaseCollector(ABC):
