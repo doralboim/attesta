@@ -1,5 +1,9 @@
 """x402 rail — isolated behind interface for spec drift."""
 
+from __future__ import annotations
+
+import base64
+import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
@@ -27,6 +31,58 @@ class PaymentVerification:
     valid: bool
     payer_address: str | None
     receipt: dict | None
+
+
+def encode_payment_required(spec: PaymentSpec) -> str:
+    payload = {
+        "x402Version": 2,
+        "error": "PAYMENT-SIGNATURE header is required",
+        "resource": {"url": spec.resource, "mimeType": "application/json"},
+        "accepts": [
+            {
+                "scheme": spec.scheme,
+                "network": spec.network,
+                "amount": spec.amount,
+                "asset": spec.asset,
+                "payTo": spec.pay_to,
+                "maxTimeoutSeconds": 60,
+                "extra": {"name": spec.asset},
+            }
+        ],
+    }
+    return base64.b64encode(json.dumps(payload).encode()).decode()
+
+
+def encode_payment_response(
+    *,
+    success: bool,
+    network: str,
+    payer: str | None = None,
+    receipt: dict | None = None,
+    error_reason: str | None = None,
+) -> str:
+    payload: dict[str, Any] = {
+        "success": success,
+        "network": network,
+        "payer": payer,
+    }
+    if receipt is not None:
+        payload["receipt"] = receipt
+    if error_reason:
+        payload["errorReason"] = error_reason
+    return base64.b64encode(json.dumps(payload).encode()).decode()
+
+
+def decode_payment_signature(header: str) -> dict | str:
+    """Return decoded JSON if the header is base64 PaymentPayload; else the raw string."""
+    try:
+        raw = base64.b64decode(header, validate=True)
+        data = json.loads(raw.decode())
+        if isinstance(data, dict):
+            return data
+    except (ValueError, json.JSONDecodeError):
+        pass
+    return header
 
 
 class X402Rail(ABC):

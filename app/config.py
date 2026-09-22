@@ -70,6 +70,9 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     daily_spend_cap_eur: float = 50.0
 
+    # Internal ops API (optional even in production — endpoint 503s if unset)
+    admin_api_token: str = ""
+
     # Dev bootstrap API key (hashed at runtime, never stored raw in DB from this)
     bootstrap_api_key: str = "dev-key-change-me"
 

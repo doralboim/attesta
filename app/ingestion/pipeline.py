@@ -45,6 +45,17 @@ class IngestionService:
         logger.info("ingestion_complete", source=collector.source_name, **stats)
         return stats
 
+    async def ingest_one(self, listing: RawListing) -> Observation:
+        """Ingest a single listing without a full-source delist sweep. Does not commit."""
+        created, _ = await self._ingest_listing(listing)
+        if created:
+            await self.session.flush()
+        obs = await self._latest_observation(listing.source, listing.source_listing_id)
+        if obs is None:
+            msg = f"ingest_one produced no observation for {listing.source}/{listing.source_listing_id}"
+            raise RuntimeError(msg)
+        return obs
+
     async def _ingest_listing(self, listing: RawListing) -> tuple[bool, str | None]:
         payload_dict = strip_pii_from_record(listing.raw_payload or listing.attrs)
         payload = snapshot_payload(payload_dict)
@@ -91,6 +102,7 @@ class IngestionService:
             geo_lat=listing.geo_lat,
             geo_lon=listing.geo_lon,
             embedding=embedding,
+            source_class=listing.source_class,
         )
         self.session.add(obs)
         return True, event

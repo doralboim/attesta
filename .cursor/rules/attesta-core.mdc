@@ -18,7 +18,7 @@ alwaysApply: true
 1. `snapshots` table is append-only — no UPDATE/DELETE in app code
 2. PII stripped at ingestion before DB/R2 writes
 3. All priced calls go through `app/payments/metering.py`
-4. Adjudicator LLM sees only retrieved evidence; post-validate verdict citations
+4. Adjudicator LLM sees only retrieved evidence; post-validate verdict citations and source_class eligibility (ADR-010)
 5. Never block responses on Stripe — queue usage async
 6. API keys stored as SHA-256 hashes only
 7. Secrets from env only; fail fast in production

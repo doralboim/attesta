@@ -7,7 +7,7 @@
   "authentication": {
     "required": false,
     "schemes": ["api_key", "x402"],
-    "notes": "Pass api_key tool parameter or X-API-Key header for Stripe-metered access (~200 free calls/month). Without a key, REST returns HTTP 402 with x402 USDC payment spec on Base."
+    "notes": "Pass api_key tool parameter or X-API-Key header for Stripe-metered access (~200 free calls/month). Without a key, REST returns HTTP 402 with PAYMENT-REQUIRED (x402 v2). Retry with PAYMENT-SIGNATURE."
   },
   "tools": [
     {
@@ -97,15 +97,15 @@
     },
     {
       "name": "verify_claim",
-      "description": "Verify a natural-language property claim; returns per-predicate verdicts and signed JWS attestation. Depth corpus (€0.02) or deep with live fetch (€0.08).",
+      "description": "Verify a claim or listing URL; returns per-predicate verdicts and a signed JWS receipt (attesta/verify@0.2). Provide exactly one of claim or url.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "claim": { "type": "string", "description": "Natural-language property claim to verify" },
+          "url": { "type": "string", "description": "Listing URL to observe and attest" },
           "depth": { "type": "string", "enum": ["corpus", "deep"], "default": "corpus" },
           "api_key": { "type": "string" }
-        },
-        "required": ["claim"]
+        }
       }
     }
   ],

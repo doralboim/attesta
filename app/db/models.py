@@ -68,6 +68,7 @@ class Observation(Base):
         Vector(384) if HAS_PGVECTOR else Text,  # type: ignore[misc]
         nullable=True,
     )
+    source_class: Mapped[str] = mapped_column(Text, nullable=False, default="portal", server_default="portal")
 
     snapshot: Mapped[Snapshot] = relationship(back_populates="observations")
     property_links: Mapped[list[PropertyObservation]] = relationship(back_populates="observation")
@@ -141,6 +142,18 @@ class UsageEvent(Base):
     request_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     x402_receipt: Mapped[dict | None] = mapped_column(JSON().with_variant(JSONB, "postgresql"), nullable=True)
     stripe_pushed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class ToolPrice(Base):
+    """Runtime-editable tool prices. Defaults live in app/payments/pricing.py."""
+
+    __tablename__ = "tool_prices"
+
+    tool: Mapped[str] = mapped_column(Text, primary_key=True)
+    price_eur: Mapped[float] = mapped_column(Numeric, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
 
 
 class Attestation(Base):

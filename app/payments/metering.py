@@ -15,9 +15,15 @@ from app.config import get_settings
 from app.db.models import ApiKey, UsageEvent
 from app.ingestion.pii_strip import hash_api_key
 from app.payments.guardrails import Guardrails
-from app.payments.pricing import price_for_tool
+from app.payments.pricing import PricingService
 from app.payments.stripe_rail import FakeStripeRail, LiveStripeRail, StripeRail
-from app.payments.x402 import FakeX402Rail, LiveX402Rail, PaymentSpec, X402Rail
+from app.payments.x402 import (
+    FakeX402Rail,
+    LiveX402Rail,
+    PaymentSpec,
+    X402Rail,
+    encode_payment_required,
+)
 
 
 @dataclass
@@ -29,6 +35,7 @@ class MeteringContext:
     tool: str
     price_eur: Decimal
     usage_event_id: int | None = None
+    x402_receipt: dict | None = None
 
 
 class MeteringService:
@@ -74,7 +81,7 @@ class MeteringService:
         request_id: str | None = None,
     ) -> MeteringContext:
         rid = request_id or str(uuid.uuid4())
-        price = price_for_tool(tool)
+        price = await PricingService(self.session).get_price(tool)
 
         if await self.guardrails.is_duplicate_request(rid):
             existing = await self.session.scalar(select(UsageEvent).where(UsageEvent.request_id == rid))
@@ -114,6 +121,7 @@ class MeteringService:
                     "message": "Payment required",
                     "payment_spec": spec.__dict__,
                 },
+                headers={"PAYMENT-REQUIRED": encode_payment_required(spec)},
             )
 
         if identifier and not await self.guardrails.check_rate_limit(identifier):
@@ -161,6 +169,7 @@ class MeteringService:
             request_id=request_id,
             tool=tool,
             price_eur=price,
+            x402_receipt=verification.receipt,
         )
 
     async def _has_free_tier_remaining(self, key_hash: str, monthly_free: int) -> bool:
@@ -182,6 +191,7 @@ class MeteringService:
             tool=ctx.tool,
             price_eur=float(ctx.price_eur),
             request_id=ctx.request_id,
+            x402_receipt=ctx.x402_receipt,
             stripe_pushed=False,
         )
         self.session.add(event)
@@ -190,5 +200,6 @@ class MeteringService:
 
         await self.session.commit()
 
-    def payment_spec_for_tool(self, tool: str) -> PaymentSpec:
-        return self.x402.build_payment_spec(tool, price_for_tool(tool), resource=f"/v1/{tool}")
+    async def payment_spec_for_tool(self, tool: str) -> PaymentSpec:
+        price = await PricingService(self.session).get_price(tool)
+        return self.x402.build_payment_spec(tool, price, resource=f"/v1/{tool}")

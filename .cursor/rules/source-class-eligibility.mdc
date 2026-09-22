@@ -1,0 +1,12 @@
+---
+description: Source-class eligibility — cadastral evidence is never title
+alwaysApply: true
+---
+
+# Source-class eligibility (ADR-010)
+
+- Persist `observations.source_class` (`portal` | `cadastral` | `registry` | `feed`). Default `portal`.
+- Verdict `source_classes` are computed from stored observations, never trusted from the LLM.
+- `post_validate_verdicts` must keep the cadastral-alone rule: cadastral evidence cannot corroborate a non-geometry predicate.
+- Cadastre = parcel geometry. Conservatória = legal title. Do not merge those claims.
+- Do not store NIC as a silent property-level flag that later portal ads inherit. Parcel binding is its own confidence.

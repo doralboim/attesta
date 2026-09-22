@@ -1,11 +1,13 @@
 # Attesta
 
-> Provenance-grade Portugal residential property data and signed JWS verification for AI agents.
+> Issuer of machine-verifiable observations of real property. First coverage tag: Portugal residential (`residential_pt`).
+
+We do not claim the world is true. We claim: this is what the sources showed, with lineage.
 
 ## Products
 
 1. **Attesta Data** — deduplicated listings, price history, staleness scores, cross-portal entity resolution.
-2. **Attesta Verify** — claim adjudication with signed JWS attestations (audit-trail primitive for EU AI Act deployments).
+2. **Attesta Verify** — claim or URL adjudication with signed JWS receipts (`attesta/verify@0.2`).
 
 ## Base URL
 
@@ -17,9 +19,9 @@ Set `PUBLIC_BASE_URL` in deployment. Local dev: `http://localhost:8000`
 |------|-------------|
 | `/healthz` | Health check |
 | `/docs` | OpenAPI (REST) |
-| `/mcp` | MCP streamable HTTP |
+| `/mcp` | MCP streamable HTTP (pin `MCP-Protocol-Version: 2026-07-28`) |
 | `/.well-known/jwks.json` | Verify attestation signatures |
-| `/v1/verify` | Claim verification + JWS |
+| `/v1/verify` | Claim or URL verification + JWS receipt |
 | `/llms.txt` | This file |
 
 ## MCP tools
@@ -32,22 +34,24 @@ Set `PUBLIC_BASE_URL` in deployment. Local dev: `http://localhost:8000`
 | `get_market_stats` | Median €/m², inventory, stale rate, DOM (envelope 1.0) | 0.02 |
 | `get_comps` | Comparable actives by area ±tolerance (envelope 1.0) | 0.02 |
 | `check_listing_freshness` | Before recommending — phantom/delisted check | 0.02 |
-| `verify_claim` | Signed proof for a natural-language claim | 0.02–0.08 |
+| `verify_claim` | Signed receipt for a claim or listing URL (`verify@0.2`) | 0.02–0.08 |
 
-Example: `verify_claim(claim="T2 in Faro €240k, 40 days on market", depth="corpus")`
+Examples:
+- `verify_claim(claim="T2 in Faro €240k, 40 days on market", depth="corpus")`
+- `verify_claim(url="https://idealista.pt/imovel/1001")`
 
 ## Payment
 
 - **Stripe:** header `X-API-Key` (metered billing, ~200 free calls/month)
-- **x402:** no key → HTTP 402 with payment spec; retry with `X-PAYMENT` header (USDC on Base)
+- **x402 v2:** no key → HTTP 402 with `PAYMENT-REQUIRED`; retry with `PAYMENT-SIGNATURE` (USDC on Base). Success/failure includes `PAYMENT-RESPONSE`. `X-Payment` is still accepted as an alias.
 
 ## Coverage
 
-Portugal residential (`residential_pt`). Default corpus from bundled fixtures; live Idealista/Imovirtual collectors available when `APIFY_*` env is configured.
+Portugal residential (`residential_pt`). Default corpus from bundled fixtures; live Idealista/Imovirtual collectors available when `APIFY_*` env is configured. Receipts attest corroboration across observed sources, not legal title.
 
 ## Attestation spec
 
-See `/public/attestation-spec.md` or repo `public/attestation-spec.md`.
+See `/public/attestation-spec.md` or repo `public/attestation-spec.md` (v0.2, method `attesta/verify@0.2`).
 
 ## Market data contract
 
