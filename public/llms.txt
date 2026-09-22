@@ -11,7 +11,17 @@ We do not claim the world is true. We claim: this is what the sources showed, wi
 
 ## Base URL
 
-Set `PUBLIC_BASE_URL` in deployment. Local dev: `http://localhost:8000`
+`https://api-production-d9143.up.railway.app`
+
+Local dev: `http://localhost:8000` (or set `PUBLIC_BASE_URL`).
+
+## Get an API key
+
+```http
+POST /v1/keys
+```
+
+Returns `{"api_key":"<raw once>","monthly_free_calls":200}`. Store the key — it is never shown again. Send it as `X-API-Key` on priced calls. Free tier is ~200 calls/month; when exhausted without Stripe configured, the API returns HTTP 402 `free_tier_exhausted`.
 
 ## Endpoints
 
@@ -21,6 +31,7 @@ Set `PUBLIC_BASE_URL` in deployment. Local dev: `http://localhost:8000`
 | `/docs` | OpenAPI (REST) |
 | `/mcp` | MCP streamable HTTP (pin `MCP-Protocol-Version: 2026-07-28`) |
 | `/.well-known/jwks.json` | Verify attestation signatures |
+| `/v1/keys` | Mint a free-tier API key (no auth) |
 | `/v1/verify` | Claim or URL verification + JWS receipt |
 | `/llms.txt` | This file |
 
@@ -42,12 +53,13 @@ Examples:
 
 ## Payment
 
-- **Stripe:** header `X-API-Key` (metered billing, ~200 free calls/month)
-- **x402 v2:** no key → HTTP 402 with `PAYMENT-REQUIRED`; retry with `PAYMENT-SIGNATURE` (USDC on Base). Success/failure includes `PAYMENT-RESPONSE`. `X-Payment` is still accepted as an alias.
+- **Free tier:** `POST /v1/keys`, then header `X-API-Key` on priced REST/MCP calls (~200 free calls/month).
+- **Stripe:** metered billing after free tier when `STRIPE_SECRET_KEY` is configured.
+- **x402 v2:** optional agent rail (disabled in production by default). No key → HTTP 402 with `PAYMENT-REQUIRED`; retry with `PAYMENT-SIGNATURE` (USDC on Base). `X-Payment` is still accepted as an alias.
 
 ## Coverage
 
-Portugal residential (`residential_pt`). Default corpus from bundled fixtures; live Idealista/Imovirtual collectors available when `APIFY_*` env is configured. Receipts attest corroboration across observed sources, not legal title.
+Portugal residential (`residential_pt`). Production ingest loads **live Idealista + Imovirtual portal observations** via Apify (`attesta-ingest --live`). Receipts corroborate portal ads across observed sources; they are **not legal title**.
 
 ## Attestation spec
 

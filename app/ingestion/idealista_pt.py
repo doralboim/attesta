@@ -1,12 +1,16 @@
-"""Idealista Portugal live collector (optional Apify actor plugin)."""
-
-from datetime import UTC, datetime
+"""Idealista Portugal live collector (Apify: dz_omar/idealista-scraper-api)."""
 
 import httpx
 
 from app.config import get_settings
-from app.ingestion.apify import poll_apify_dataset
+from app.ingestion.apify import run_apify_actor
+from app.ingestion.apify_inputs import idealista_actor_input, parse_search_urls
+from app.ingestion.apify_mappers import map_actor_items
 from app.ingestion.base import BaseCollector, RawListing
+
+DEFAULT_IDEALISTA_SEARCH_URLS = (
+    "https://www.idealista.pt/comprar-casas/faro-distrito/,https://www.idealista.pt/comprar-casas/lisboa-distrito/"
+)
 
 
 class IdealistaPtCollector(BaseCollector):
@@ -21,32 +25,22 @@ class IdealistaPtCollector(BaseCollector):
             )
         self.token = settings.apify_token
         self.actor_id = settings.apify_idealista_actor_id
+        urls_raw = settings.apify_idealista_search_urls or DEFAULT_IDEALISTA_SEARCH_URLS
+        self.search_urls = parse_search_urls(urls_raw)
+        if not self.search_urls:
+            msg = "APIFY_IDEALISTA_SEARCH_URLS must contain at least one Idealista search URL"
+            raise ValueError(msg)
+        self.max_results = settings.apify_max_results_per_run
 
     async def fetch_listings(self) -> list[RawListing]:
+        actor_input = idealista_actor_input(self.search_urls, self.max_results)
         async with httpx.AsyncClient(timeout=120.0) as client:
-            items = await poll_apify_dataset(client, self.token, self.actor_id)
-            return [_apify_item_to_raw(i) for i in items]
+            items = await run_apify_actor(client, self.token, self.actor_id, actor_input)
+            return map_actor_items(self.source_name, items)
 
     async def fetch_listing_by_url(self, url: str) -> RawListing | None:
-        listings = await self.fetch_listings()
-        return next((listing for listing in listings if listing.url == url), None)
-
-
-def _apify_item_to_raw(item: dict) -> RawListing:
-    return RawListing(
-        source="idealista_pt",
-        source_listing_id=str(item.get("id", item.get("listingId", ""))),
-        url=item.get("url", ""),
-        observed_at=datetime.now(UTC),
-        price_eur=float(item["price"]) if item.get("price") else None,
-        status="active",
-        attrs={
-            "typology": item.get("typology"),
-            "area_m2": item.get("area"),
-            "city": item.get("city"),
-            "title": item.get("title"),
-        },
-        geo_lat=item.get("latitude"),
-        geo_lon=item.get("longitude"),
-        raw_payload=item,
-    )
+        actor_input = idealista_actor_input([url], max_results=1)
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            items = await run_apify_actor(client, self.token, self.actor_id, actor_input)
+            listings = map_actor_items(self.source_name, items)
+            return next((listing for listing in listings if listing.url == url), listings[0] if listings else None)

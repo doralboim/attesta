@@ -33,6 +33,8 @@ One-page checklist to go from repo → live product people can try.
 
 Neon DB migrated and seeded (5 properties, Faro corpus). Demo API key is in your local `.env.production` (also set on Railway as `BOOTSTRAP_API_KEY`).
 
+**Production ingest-worker start command:** `attesta-ingest --live` (requires `APIFY_TOKEN`). Do not leave it on `--fixture`.
+
 ### DNS for api.attesta.dev (add at your domain registrar)
 
 | Type | Name | Value |
@@ -113,7 +115,7 @@ Copy `distribution/claude-desktop.json` or `distribution/cursor-mcp.json`, repla
 |------|---------|
 | GitHub repo | No commits yet — push to `doralboim/attesta` for MCP registry namespace |
 | Custom domain | `api.attesta.dev` vs Railway default URL |
-| Live ingestion | Keep fixtures for demo, or wire Apify for production corpus |
+| Live ingestion | Production Railway ingest-worker start command must be `attesta-ingest --live` (not `--fixture`) |
 | LLM verification | `LLM_ENABLED=true` + `ANTHROPIC_API_KEY` for live verify_claim adjudication |
 | Legal entity | EU jurisdiction for GDPR/AI Act positioning |
 
