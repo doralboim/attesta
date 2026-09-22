@@ -1,0 +1,30 @@
+---
+description: Isolated worktree → local verify → PR → merge → post-deploy. Coordination clone stays clean.
+alwaysApply: true
+---
+
+# Feature pipeline (Attesta)
+
+Follow the personal skill **dor-ship-pipeline**. Product commands: `docs/verify-matrix.md`.
+
+## Parent clone (this workspace)
+
+Coordination only. Do **not** implement features or fixes here. Do **not** leave uncommitted feature WIP on `main`.
+
+Parent job: scope → launch a worker in a new worktree → return the PR URL.
+
+Skip only if the user says `skip pipeline` or `implement inline`.
+
+## Worker
+
+1. `bash scripts/new-feature-worktree.sh feat/<short-name>` (or `best-of-n-runner`)
+2. Implement the full slice in that worktree
+3. Add tests; run `docs/verify-matrix.md` locally until green
+4. Commit, push, `gh pr create` targeting `main`
+5. Merge when MERGEABLE; run post-deploy checks; remove the worktree
+
+One task → one worktree → one PR. Never commit to `main` in the parent clone.
+
+## Attesta invariants still apply
+
+`attesta-core.mdc` (append-only snapshots, PII strip, metering choke point, evidence-only adjudicator). Do not enable paid rails in a feature PR unless asked.
