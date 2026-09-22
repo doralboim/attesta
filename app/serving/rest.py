@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
+import secrets
 import uuid
+from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
+from app.config import get_settings
+from app.db.models import ApiKey
 from app.db.session import get_db
+from app.ingestion.pii_strip import hash_api_key
 from app.payments.metering import MeteringContext, MeteringService
 from app.payments.x402 import encode_payment_response
 from app.serving.tools import CompsFilters, MarketStatsFilters, SearchFilters, ToolService
 
 router = APIRouter(prefix="/v1")
+
+MINT_RATE_LIMIT_PER_HOUR = 20
 
 
 class VerifyClaimRequest(BaseModel):
@@ -56,6 +64,34 @@ def _with_payment_response(body: dict, ctx: MeteringContext) -> JSONResponse:
 @router.get("/healthz", tags=["meta"])
 async def healthz() -> dict:
     return {"status": "ok", "version": __version__}
+
+
+@router.post("/keys", tags=["meta"])
+async def mint_api_key(db: AsyncSession = Depends(get_db)) -> dict:
+    """Mint a free-tier API key (unmetered). Raw key is returned once."""
+    settings = get_settings()
+    hour_ago = datetime.now(UTC) - timedelta(hours=1)
+    recent = await db.scalar(
+        select(func.count()).select_from(ApiKey).where(ApiKey.created_at >= hour_ago)
+    )
+    if (recent or 0) >= MINT_RATE_LIMIT_PER_HOUR:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"code": "mint_rate_limit_exceeded"},
+        )
+
+    raw_key = secrets.token_urlsafe(32)
+    monthly_free = settings.free_tier_monthly_calls
+    db.add(
+        ApiKey(
+            key_hash=hash_api_key(raw_key),
+            plan="metered",
+            monthly_free_calls=monthly_free,
+            is_active=True,
+        )
+    )
+    await db.commit()
+    return {"api_key": raw_key, "monthly_free_calls": monthly_free}
 
 
 @router.post("/listings/search")

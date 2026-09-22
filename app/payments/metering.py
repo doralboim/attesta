@@ -148,7 +148,15 @@ class MeteringService:
         if not api_key or not api_key.is_active:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
-        rail = "free" if await self._has_free_tier_remaining(key_hash, api_key.monthly_free_calls) else "stripe"
+        if await self._has_free_tier_remaining(key_hash, api_key.monthly_free_calls):
+            rail = "free"
+        elif not self.settings.stripe_secret_key:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={"code": "free_tier_exhausted"},
+            )
+        else:
+            rail = "stripe"
         return MeteringContext(
             rail=rail,
             key_hash=key_hash,

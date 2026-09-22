@@ -28,8 +28,11 @@ class Settings(BaseSettings):
 
     # Optional live ingestion (Apify actors — not required; see ADR-008)
     apify_token: str = ""
-    apify_idealista_actor_id: str = ""
-    apify_imovirtual_actor_id: str = ""
+    apify_idealista_actor_id: str = "dz_omar/idealista-scraper-api"
+    apify_imovirtual_actor_id: str = "automation-lab/imovirtual-scraper"
+    apify_idealista_search_urls: str = ""
+    apify_imovirtual_search_urls: str = ""
+    apify_max_results_per_run: int = 50
 
     # Stripe async push
     stripe_flush_interval_seconds: int = 60
