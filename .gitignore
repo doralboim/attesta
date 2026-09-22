@@ -13,4 +13,5 @@ dist/
 keys/
 !keys/.gitkeep
 .snapshots/
+.worktrees/
 src/

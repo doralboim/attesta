@@ -10,6 +10,7 @@ alwaysApply: true
 - Package layout: `app/` (not `src/attesta/`)
 - Every architectural decision → ADR in `docs/decisions/` + cursor rule if recurring
 - Tests and CI must pass before merging; prefer integration tests for metering/verification
+- Ship features via **dor-ship-pipeline** (isolated worktree → local verify → PR). See `.cursor/rules/feature-pipeline.mdc`
 - Minimize human-in-the-loop: automate lint, type-check, test, migrate in CI
 
 ## Invariants (never violate)
