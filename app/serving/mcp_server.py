@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import uuid
 
-from fastmcp import FastMCP
+from fastmcp import Context, FastMCP
 
 from app.db.session import async_session_factory
 from app.payments.metering import MeteringService
 from app.serving import descriptions as desc
+from app.serving.lazy_corpus import lazy_corpus
 from app.serving.tools import CompsFilters, MarketStatsFilters, SearchFilters, ToolService
 from app.verification.pipeline import VerificationPipeline
 
@@ -35,18 +36,29 @@ async def search_listings(
     max_price_eur: float | None = None,
     limit: int = 20,
     api_key: str | None = None,
+    ctx: Context | None = None,
 ) -> dict:
     await _metered("search_listings", api_key=api_key)
+    filters = SearchFilters(
+        region=region,
+        city=city,
+        min_price_eur=min_price_eur,
+        max_price_eur=max_price_eur,
+        limit=limit,
+    )
     async with async_session_factory() as session:
-        return await ToolService(session).search_listings(
-            SearchFilters(
-                region=region,
-                city=city,
-                min_price_eur=min_price_eur,
-                max_price_eur=max_price_eur,
-                limit=limit,
-            )
-        )
+        result = await lazy_corpus.begin_search(session, filters)
+    coverage = result.get("coverage") or {}
+    if coverage.get("status") != "updating":
+        return result
+    if ctx is not None:
+        await ctx.info(str(coverage.get("message", "")))
+    job = lazy_corpus.jobs[str(coverage["job_id"])]
+    await job.finished.wait()
+    final = job.payload or result
+    if ctx is not None:
+        await ctx.info(str((final.get("coverage") or {}).get("message", "")))
+    return final
 
 
 @mcp.tool(name="get_property", description=desc.GET_PROPERTY)
