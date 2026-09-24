@@ -22,9 +22,7 @@ def _reset_lazy_corpus():
 def test_portal_urls_are_scoped_to_the_city() -> None:
     idealista, imovirtual = portal_search_urls("Portimão")
     assert idealista == ["https://www.idealista.pt/comprar-casas/portimao/"]
-    assert imovirtual == [
-        "https://www.imovirtual.com/pt/resultados/comprar/apartamento/portimao/portimao"
-    ]
+    assert imovirtual == ["https://www.imovirtual.com/pt/resultados/comprar/apartamento/portimao/portimao"]
     assert place_slug("São Brás") == "sao-bras"
 
 
@@ -67,9 +65,7 @@ def _lagos_listing() -> RawListing:
 
 
 @pytest.mark.asyncio
-async def test_search_reports_updating_then_saves_only_the_requested_city(
-    client: AsyncClient, db_session
-) -> None:
+async def test_search_reports_updating_then_saves_only_the_requested_city(client: AsyncClient, db_session) -> None:
     fixtures = Path(__file__).parent / "fixtures" / "idealista_pt_listings.json"
     await IngestionService(db_session).ingest_collector(FixtureCollector(fixtures))
     await ResolutionService(db_session).resolve_all()

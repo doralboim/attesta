@@ -73,9 +73,7 @@ async def mint_api_key(db: AsyncSession = Depends(get_db)) -> dict:
     """Mint a free-tier API key (unmetered). Raw key is returned once."""
     settings = get_settings()
     hour_ago = datetime.now(UTC) - timedelta(hours=1)
-    recent = await db.scalar(
-        select(func.count()).select_from(ApiKey).where(ApiKey.created_at >= hour_ago)
-    )
+    recent = await db.scalar(select(func.count()).select_from(ApiKey).where(ApiKey.created_at >= hour_ago))
     if (recent or 0) >= MINT_RATE_LIMIT_PER_HOUR:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -126,9 +124,7 @@ async def _allow_ingest_events(db: AsyncSession, api_key: str | None) -> None:
         return
     if not api_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "api_key_required"})
-    row = await db.scalar(
-        select(ApiKey).where(ApiKey.key_hash == hash_api_key(api_key), ApiKey.is_active.is_(True))
-    )
+    row = await db.scalar(select(ApiKey).where(ApiKey.key_hash == hash_api_key(api_key), ApiKey.is_active.is_(True)))
     if row is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "invalid_api_key"})
 

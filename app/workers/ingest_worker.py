@@ -41,8 +41,7 @@ async def run_live() -> None:
     settings = get_settings()
     if not settings.apify_token:
         print(
-            "APIFY_TOKEN is required for attesta-ingest --live. "
-            "Refusing to fall back to fixtures.",
+            "APIFY_TOKEN is required for attesta-ingest --live. Refusing to fall back to fixtures.",
             file=sys.stderr,
         )
         raise SystemExit(1)

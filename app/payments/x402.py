@@ -80,7 +80,7 @@ def decode_payment_signature(header: str) -> dict | str:
         data = json.loads(raw.decode())
         if isinstance(data, dict):
             return data
-    except (ValueError, json.JSONDecodeError):
+    except ValueError, json.JSONDecodeError:
         pass
     return header
 
