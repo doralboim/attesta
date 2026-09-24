@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,7 @@ from app.db.session import get_db
 from app.ingestion.pii_strip import hash_api_key
 from app.payments.metering import MeteringContext, MeteringService
 from app.payments.x402 import encode_payment_response
+from app.serving.lazy_corpus import lazy_corpus
 from app.serving.tools import CompsFilters, MarketStatsFilters, SearchFilters, ToolService
 
 router = APIRouter(prefix="/v1")
@@ -109,7 +111,58 @@ async def search_listings(
         payment_header=payment_header,
         request_id=_request_id(request),
     )
-    return _with_payment_response(await ToolService(db).search_listings(body), ctx)
+    result = await lazy_corpus.begin_search(db, body)
+    return _with_payment_response(result, ctx)
+
+
+def _sse(data: dict) -> str:
+    return f"event: coverage\ndata: {json.dumps(data)}\n\n"
+
+
+async def _allow_ingest_events(db: AsyncSession, api_key: str | None) -> None:
+    """Confirm the caller without a second metered charge."""
+    settings = get_settings()
+    if settings.environment in ("development", "test"):
+        return
+    if not api_key:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "api_key_required"})
+    row = await db.scalar(
+        select(ApiKey).where(ApiKey.key_hash == hash_api_key(api_key), ApiKey.is_active.is_(True))
+    )
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "invalid_api_key"})
+
+
+async def _ingest_event_stream(job_id: str):
+    job = lazy_corpus.jobs.get(job_id)
+    if job is None:
+        yield _sse({"status": "unavailable", "message": "Unknown ingest job.", "job_id": job_id})
+        return
+    yield _sse({"status": "updating", "message": job.message, "job_id": job.id})
+    if job.payload is not None:
+        yield _sse(job.payload)
+        return
+    queue = job.subscribe()
+    while True:
+        event = await queue.get()
+        if "listings" not in event:
+            continue
+        yield _sse(event)
+        return
+
+
+@router.get("/listings/ingest/{job_id}/events")
+async def ingest_events(
+    job_id: str,
+    db: AsyncSession = Depends(get_db),
+    x_api_key: str | None = Header(default=None),
+) -> StreamingResponse:
+    await _allow_ingest_events(db, x_api_key)
+    return StreamingResponse(
+        _ingest_event_stream(job_id),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.get("/properties/{property_id}")

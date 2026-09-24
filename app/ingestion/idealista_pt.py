@@ -16,7 +16,7 @@ DEFAULT_IDEALISTA_SEARCH_URLS = (
 class IdealistaPtCollector(BaseCollector):
     source_name = "idealista_pt"
 
-    def __init__(self) -> None:
+    def __init__(self, search_urls: list[str] | None = None) -> None:
         settings = get_settings()
         if not settings.apify_token or not settings.apify_idealista_actor_id:
             raise ValueError(
@@ -25,8 +25,11 @@ class IdealistaPtCollector(BaseCollector):
             )
         self.token = settings.apify_token
         self.actor_id = settings.apify_idealista_actor_id
-        urls_raw = settings.apify_idealista_search_urls or DEFAULT_IDEALISTA_SEARCH_URLS
-        self.search_urls = parse_search_urls(urls_raw)
+        if search_urls is not None:
+            self.search_urls = [url.strip() for url in search_urls if url.strip()]
+        else:
+            urls_raw = settings.apify_idealista_search_urls or DEFAULT_IDEALISTA_SEARCH_URLS
+            self.search_urls = parse_search_urls(urls_raw)
         if not self.search_urls:
             msg = "APIFY_IDEALISTA_SEARCH_URLS must contain at least one Idealista search URL"
             raise ValueError(msg)

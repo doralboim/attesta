@@ -2,7 +2,9 @@
 
 SEARCH_LISTINGS = (
     "Search deduplicated residential property listings in Portugal. "
-    "Coverage: PT residential, updated <6h when ingestion is active. "
+    "If the city is already saved, returns those observations. "
+    "If not, coverage.status is updating while Attesta fetches and saves only that city, "
+    "then the tool returns the saved rows. Name a city; a region alone is not fetched. "
     "Cost: €0.01 per call. "
     "Example: search_listings(region='PT-08', city='Faro', max_price_eur=300000, limit=10)"
 )
